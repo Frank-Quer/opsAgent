@@ -33,6 +33,9 @@ func cardContent(s cardState) (string, error) {
 	} else if len(elements) == 0 {
 		elements = append(elements, map[string]any{"tag": "div", "text": map[string]string{"tag": "plain_text", "content": "已收到，正在开始排查。"}})
 	}
+	if s.Session != "" {
+		elements = append(elements, map[string]any{"tag": "div", "text": map[string]string{"tag": "plain_text", "content": "本地恢复：codex resume " + s.Session}})
+	}
 	if s.State == "运行中" {
 		elements = append(elements, map[string]any{"tag": "action", "actions": []any{
 			map[string]any{"tag": "button", "type": "danger", "text": map[string]string{"tag": "plain_text", "content": "终止"}, "value": map[string]string{"action": "stop_task"}},

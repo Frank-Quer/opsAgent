@@ -10,6 +10,7 @@ type cardState struct {
 	State     string
 	Summaries []string
 	Result    string
+	Session   string
 	Elapsed   time.Duration
 	Frame     int
 }
@@ -90,11 +91,13 @@ func (p *progress) start() {
 	}()
 }
 
-func (p *progress) finish(state, text string) error {
+func (p *progress) finish(state, text, session string) error {
 	close(p.stop)
 	<-p.done
 	if p.err != nil {
 		return p.err
 	}
-	return p.send(p.snapshot(state, text, 0))
+	s := p.snapshot(state, text, 0)
+	s.Session = session
+	return p.send(s)
 }

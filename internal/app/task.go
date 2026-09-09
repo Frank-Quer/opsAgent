@@ -102,8 +102,9 @@ func (b *bot) executeTask(ctx context.Context, cancel context.CancelFunc, task t
 	}
 	if revoked {
 		state, output = "已停止", "授权已撤销，任务已停止。"
+		next = ""
 	}
-	if p.finish(state, output) != nil && b.ctx.Err() == nil {
+	if p.finish(state, output, next) != nil && b.ctx.Err() == nil {
 		b.sendTaskResult(id, output)
 	}
 }

@@ -26,7 +26,7 @@ func TestProgressCoalescesAndFinishesLast(t *testing.T) {
 	p.report("最新摘要")
 	p.start()
 	<-sent
-	if err := p.finish("已完成", "结论"); err != nil {
+	if err := p.finish("已完成", "结论", ""); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(updates, []string{"运行中:最新摘要", "已完成:结论"}) {
@@ -46,7 +46,7 @@ func TestProgressFailureStopsUpdates(t *testing.T) {
 	p.start()
 	<-sent
 	p.report("后续摘要")
-	if p.finish("已完成", "结论") == nil || calls != 1 {
+	if p.finish("已完成", "结论", "") == nil || calls != 1 {
 		t.Fatalf("calls=%d", calls)
 	}
 }
@@ -63,7 +63,7 @@ func TestProgressFinishDiscardsPending(t *testing.T) {
 	})
 	p.start()
 	p.report("过期摘要")
-	if err := p.finish("已完成", "结论"); err != nil {
+	if err := p.finish("已完成", "结论", ""); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(updates, []string{"已完成:结论"}) {
@@ -93,7 +93,7 @@ func TestProgressFinishWaitsForInflight(t *testing.T) {
 	p.start()
 	<-entered
 	p.report("待丢弃")
-	go func() { finished <- p.finish("已完成", "结论") }()
+	go func() { finished <- p.finish("已完成", "结论", "") }()
 	select {
 	case <-finished:
 		t.Fatal("did not wait for inflight update")

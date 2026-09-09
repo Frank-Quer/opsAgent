@@ -21,7 +21,7 @@ func TestRecentSummariesAndFinalExclusion(t *testing.T) {
 	}
 	p.report("结论")
 	p.start()
-	if e := p.finish("已完成", "结论"); e != nil {
+	if e := p.finish("已完成", "结论", ""); e != nil {
 		t.Fatal(e)
 	}
 	if !reflect.DeepEqual(final.Summaries, []string{"二", "三", "四"}) || final.Result != "结论" {
@@ -47,7 +47,7 @@ func TestAnimationWithoutSummaries(t *testing.T) {
 			t.Fatal("missing heartbeat")
 		}
 	}
-	if e := p.finish("已完成", "结论"); e != nil {
+	if e := p.finish("已完成", "结论", ""); e != nil {
 		t.Fatal(e)
 	}
 	for len(frames) > 0 {
