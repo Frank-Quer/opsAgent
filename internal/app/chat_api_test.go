@@ -104,6 +104,36 @@ func TestContextMissingContinues(t *testing.T) {
 	}
 }
 
+func TestQuotedBotCardContext(t *testing.T) {
+	content := `{"title":"Hyperliquid HTTP限流","elements":[[{"tag":"text","text":"hyperliquid /info http 429: null"}]]}`
+	card := &larkim.Message{MessageId: ptr("om_card"), ChatId: ptr("oc_chat"), CreateTime: ptr("500"), MsgType: ptr("interactive"), Body: &larkim.MessageBody{Content: &content}, Sender: &larkim.Sender{Id: ptr("bot_alert"), SenderType: ptr("app")}}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(r.URL.Path, "tenant_access_token"):
+			w.Write([]byte(`{"code":0,"tenant_access_token":"test-only","expire":7200}`))
+		case r.URL.Path == "/open-apis/im/v1/messages/om_card", r.URL.Path == "/open-apis/im/v1/messages":
+			json.NewEncoder(w).Encode(map[string]any{"code": 0, "data": map[string]any{"items": []*larkim.Message{card}, "has_more": false}})
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+			w.WriteHeader(404)
+		}
+	}))
+	defer server.Close()
+	client := lark.NewClient("card-context-test", "test-only", lark.WithOpenBaseUrl(server.URL))
+	m := &larkim.EventMessage{MessageId: ptr("om_trigger"), ChatId: ptr("oc_chat"), ChatType: ptr("group"), CreateTime: ptr("1000"), ParentId: ptr("om_card"), MessageType: ptr("text"), Content: ptr(`{"text":"排查下"}`)}
+	prompt, images, cleanup := prepareChat(client)(context.Background(), m, "排查下")
+	defer cleanup()
+	if !strings.Contains(prompt, "直接引用消息") || !strings.Contains(prompt, "Hyperliquid HTTP限流") || strings.Count(prompt, "hyperliquid /info http 429: null") != 1 || strings.Contains(prompt, "未解析") || len(images) != 0 {
+		t.Fatalf("images=%v prompt=%s", images, prompt)
+	}
+	c := &chatTask{client: client, chat: "oc_chat", cutoff: 1000, known: map[string]*larkim.Message{}, pages: map[string]bool{}}
+	page, err := c.list(context.Background(), "", "", 10)
+	if err != nil || len(page.Messages) != 1 || !strings.Contains(page.Messages[0].Text, "http 429") {
+		t.Fatalf("history=%+v err=%v", page, err)
+	}
+}
+
 func TestContextSocketRejectsOutsideMessage(t *testing.T) {
 	c := &chatTask{known: map[string]*larkim.Message{}}
 	r := httptest.NewRequest("POST", "/context", strings.NewReader(`{"action":"image","message":"om_other","index":0}`))

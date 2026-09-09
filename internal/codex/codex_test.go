@@ -50,7 +50,13 @@ printf '%s\n' '{"type":"thread.started","thread_id":"thread-123"}' '{"type":"ite
 			t.Fatalf("resume args=%s", args)
 		}
 		prompt, _ := os.ReadFile(filepath.Join(filepath.Dir(r.Binary), "prompt"))
-		for _, rule := range []string{"shell、SSH", "禁止在飞书回复中输出", "密钥", "服务器 IP", "不输出命令", "1～3 句", "证据不足"} {
+		for _, rule := range []string{
+			"shell、SSH", "禁止在飞书回复中输出", "密钥", "服务器 IP", "不输出命令", "1～3 句", "证据不足",
+			"每轮排查（包括续聊）", "开展具体检查前", ".docs/troubleshooting.md", "用 rg 检索", "rg 不可用时用 grep",
+			"结合本次环境和证据复核", "不作为额外操作授权", "每轮最终回复前", "已完全查明且有证据支持",
+			"值得复用的新经验", "仅告警恢复或没有新增价值时不写入", "同类经验优先合并或修正", "不重复追加",
+			"未经执行验证的修复建议不能写成有效处理方法", "只维护当前工作区的指南", "不自动提交 Git",
+		} {
 			if !strings.Contains(string(prompt), rule) {
 				t.Fatalf("missing rule %q", rule)
 			}

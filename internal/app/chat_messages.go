@@ -36,6 +36,8 @@ func messageText(kind, content, botID string) (string, []string, error) {
 	}
 	var images []string
 	switch kind {
+	case "interactive":
+		return cardText(content)
 	case "text":
 		var v struct {
 			Text string `json:"text"`
@@ -109,4 +111,44 @@ func messageText(kind, content, botID string) (string, []string, error) {
 	default:
 		return "[未解析的消息类型]", nil, errors.New("不支持该消息类型")
 	}
+}
+
+func cardText(content string) (string, []string, error) {
+	var card map[string]any
+	if json.Unmarshal([]byte(content), &card) != nil || card == nil {
+		return "", nil, errors.New("卡片格式无效")
+	}
+	var lines []string
+	var walk func(any)
+	walk = func(value any) {
+		switch v := value.(type) {
+		case string:
+			if text := strings.TrimSpace(v); text != "" {
+				lines = append(lines, text)
+			}
+		case []any:
+			for _, child := range v {
+				walk(child)
+			}
+		case map[string]any:
+			// 只读取可见文本和布局字段，避免把回调 value、配置等当作正文。
+			for _, key := range []string{"header", "title", "text"} {
+				walk(v[key])
+			}
+			switch v["tag"] {
+			case "plain_text", "lark_md", "markdown":
+				if text, ok := v["content"].(string); ok {
+					walk(text)
+				}
+			}
+			for _, key := range []string{"body", "elements", "fields", "columns", "actions"} {
+				walk(v[key])
+			}
+		}
+	}
+	walk(card)
+	if len(lines) == 0 {
+		return "", nil, errors.New("卡片没有可读取的文本")
+	}
+	return strings.Join(lines, "\n"), nil, nil
 }
