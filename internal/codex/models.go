@@ -10,8 +10,21 @@ import (
 )
 
 type Model struct {
-	Model   string `json:"model"`
-	Default bool   `json:"isDefault"`
+	Model                     string            `json:"model"`
+	Default                   bool              `json:"isDefault"`
+	SupportedReasoningEfforts []ReasoningEffort `json:"supportedReasoningEfforts"`
+}
+
+type ReasoningEffort struct {
+	ReasoningEffort string `json:"reasoningEffort"`
+}
+
+func ValidReasoningEffort(v string) bool {
+	switch v {
+	case "", "none", "minimal", "low", "medium", "high", "xhigh":
+		return true
+	}
+	return false
 }
 
 func ValidModel(v string) bool {

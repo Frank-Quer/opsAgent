@@ -29,6 +29,9 @@ func (b *bot) executeTask(ctx context.Context, cancel context.CancelFunc, task t
 		b.busy = false
 		b.activeUser = ""
 		b.activeCancel = nil
+		b.activeCard = ""
+		b.activeChat = ""
+		b.activeStopped = false
 		b.activeRevoked = false
 		b.mu.Unlock()
 	}()
@@ -44,10 +47,17 @@ func (b *bot) executeTask(ctx context.Context, cancel context.CancelFunc, task t
 		log.Print("排查卡片发送失败，未启动任务")
 		return
 	}
+	b.mu.Lock()
+	b.activeCard, b.activeChat = cardID, value(task.message.ChatId)
+	b.mu.Unlock()
 	p := newProgress(b.ctx, 3*time.Second, func(ctx context.Context, state cardState) error {
 		b.mu.Lock()
 		revoked := b.activeRevoked
+		stopped := b.activeStopped
 		b.mu.Unlock()
+		if stopped {
+			state.State, state.Result = "已停止", "任务已终止。"
+		}
 		if revoked {
 			state = cardState{State: "已停止", Result: "授权已撤销，任务已停止。"}
 		}
@@ -75,16 +85,21 @@ func (b *bot) executeTask(ctx context.Context, cancel context.CancelFunc, task t
 		state, output = "失败", "任务失败，请稍后重试。未自动重跑。"
 		if errors.Is(err, context.DeadlineExceeded) {
 			state, output = "超时", "任务超过 10 分钟，已停止；不会自动重跑。"
-		} else if b.ctx.Err() != nil {
+		} else if errors.Is(err, context.Canceled) || b.ctx.Err() != nil {
 			state, output = "已停止", "任务已停止。"
 		}
 	}
 	b.mu.Lock()
 	revoked := b.activeRevoked
-	if !revoked && err == nil {
+	stopped := b.activeStopped
+	b.activeCard = ""
+	if !revoked && !stopped && err == nil {
 		b.sessions[task.sessionKey] = next
 	}
 	b.mu.Unlock()
+	if stopped {
+		state, output = "已停止", "任务已终止。"
+	}
 	if revoked {
 		state, output = "已停止", "授权已撤销，任务已停止。"
 	}

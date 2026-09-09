@@ -18,6 +18,9 @@ import (
 // Register workers under mu before releasing it; stop closes admission before waiting.
 type bot struct {
 	users         *userStore
+	activeCard    string
+	activeChat    string
+	activeStopped bool
 	activeUser    string
 	activeCancel  context.CancelFunc
 	activeRevoked bool
@@ -202,7 +205,7 @@ func (b *bot) handle(e *larkim.P2MessageReceiveV1) {
 	b.activeRevoked = false
 	go b.executeTask(taskCtx, taskCancel, taskInput{
 		message:    m,
-		request:    codex.Request{Directory: dir, Session: b.sessions[sessionKey], Prompt: text, Model: model},
+		request:    codex.Request{Directory: dir, Session: b.sessions[sessionKey], Prompt: text, Model: model, ReasoningEffort: b.workspaces.bindings[b.appID][chat].ReasoningEffort},
 		sessionKey: sessionKey, environment: environment, modelCommand: modelCommand,
 	})
 }

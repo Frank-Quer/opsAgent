@@ -100,6 +100,7 @@ func Run(args []string) error {
 			bot.handle(event)
 			return nil
 		})
+	handler.OnP2CardActionTrigger(bot.handleCardAction)
 	handler.OnP2ChatMemberBotAddedV1(func(_ context.Context, e *larkim.P2ChatMemberBotAddedV1) error { bot.handleJoined(e); return nil })
 	ws := larkws.NewClient(appID, secret, larkws.WithEventHandler(handler), larkws.WithLogLevel(larkcore.LogLevelError),
 		larkws.WithOnReady(func() { log.Print("飞书长连接已就绪，可以保存事件订阅。") }),

@@ -15,17 +15,21 @@ type Runner struct{ Binary string }
 
 // Request describes one turn, including an optional existing session.
 type Request struct {
-	Directory string
-	Session   string
-	Prompt    string
-	Model     string
-	Images    []string
+	Directory       string
+	Session         string
+	Prompt          string
+	ReasoningEffort string
+	Model           string
+	Images          []string
 }
 
 // Result contains only the session identifier and final answer.
 type Result struct{ Session, Output string }
 
 func (r *Runner) Run(ctx context.Context, req Request, progress func(string)) (Result, error) {
+	if !ValidReasoningEffort(req.ReasoningEffort) {
+		return Result{}, errors.New("思考强度无效")
+	}
 	args := []string{"-a", "never", "exec", "--sandbox", "danger-full-access"}
 	if req.Session != "" {
 		args = append(args, "resume")
@@ -33,6 +37,9 @@ func (r *Runner) Run(ctx context.Context, req Request, progress func(string)) (R
 	args = append(args, "--json", "--skip-git-repo-check")
 	if req.Model != "" {
 		args = append(args, "--model", req.Model)
+	}
+	if req.ReasoningEffort != "" {
+		args = append(args, "-c", fmt.Sprintf("model_reasoning_effort=%q", req.ReasoningEffort))
 	}
 	for _, path := range req.Images {
 		args = append(args, "--image", path)

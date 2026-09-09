@@ -125,7 +125,7 @@ func TestCardUsesPlainText(t *testing.T) {
 	if err = json.Unmarshal([]byte(content), &card); err != nil {
 		t.Fatal(err)
 	}
-	if len(card.Elements) != 1 || card.Elements[0].Text.Tag != "plain_text" || card.Elements[0].Text.Content != text {
+	if len(card.Elements) != 2 || card.Elements[0].Text.Tag != "plain_text" || card.Elements[0].Text.Content != text {
 		t.Fatal("invalid card text")
 	}
 	if _, err = cardContent(cardState{State: "已完成", Result: strings.Repeat("长", 30000)}); err == nil {

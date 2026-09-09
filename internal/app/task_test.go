@@ -13,6 +13,7 @@ import (
 func TestTaskPassesRequestAndResumes(t *testing.T) {
 	b := testBot(context.Background(), "ou_me", nil, func(context.Context, string, string) error { return nil })
 	binding := b.workspaces.bindings[b.appID]["oc_chat"]
+	binding.ReasoningEffort = "high"
 	binding.Environment, binding.Model = "测试环境", "model-test"
 	b.workspaces.bindings[b.appID]["oc_chat"] = binding
 	cleaned := 0
@@ -35,7 +36,7 @@ func TestTaskPassesRequestAndResumes(t *testing.T) {
 		t.Fatal("session not resumed")
 	}
 	for _, req := range requests {
-		if req.Directory != binding.Directory || req.Model != binding.Model || !reflect.DeepEqual(req.Images, []string{"/tmp/example.png"}) || !strings.Contains(req.Prompt, "测试环境") || !strings.HasSuffix(req.Prompt, "检查 上下文") {
+		if req.Directory != binding.Directory || req.Model != binding.Model || req.ReasoningEffort != "high" || !reflect.DeepEqual(req.Images, []string{"/tmp/example.png"}) || !strings.Contains(req.Prompt, "测试环境") || !strings.HasSuffix(req.Prompt, "检查 上下文") {
 			t.Fatalf("invalid request: %+v", req)
 		}
 	}

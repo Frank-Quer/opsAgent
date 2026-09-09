@@ -10,9 +10,10 @@ import (
 )
 
 type workspaceBinding struct {
-	Model       string `json:"model,omitempty"`
-	Directory   string `json:"directory"`
-	Environment string `json:"environment,omitempty"`
+	ReasoningEffort string `json:"reasoning_effort,omitempty"`
+	Model           string `json:"model,omitempty"`
+	Directory       string `json:"directory"`
+	Environment     string `json:"environment,omitempty"`
 }
 
 func (b *workspaceBinding) UnmarshalJSON(data []byte) error {

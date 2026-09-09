@@ -34,7 +34,7 @@ func loadWorkspaces(path string) (*workspaceStore, error) {
 		}
 		for chat, binding := range chats {
 			dir := binding.Directory
-			if !validID(chat, "oc_") || !filepath.IsAbs(dir) || strings.ContainsAny(dir, "\x00\r\n") || !validEnvironment(binding.Environment) || !codex.ValidModel(binding.Model) {
+			if !validID(chat, "oc_") || !filepath.IsAbs(dir) || strings.ContainsAny(dir, "\x00\r\n") || !validEnvironment(binding.Environment) || !codex.ValidModel(binding.Model) || !codex.ValidReasoningEffort(binding.ReasoningEffort) {
 				return nil, errors.New("工作区配置无效")
 			}
 		}
